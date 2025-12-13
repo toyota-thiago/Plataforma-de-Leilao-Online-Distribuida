@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Leilões - Plataforma de Leilão Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Plataforma de Leilão Online</h1>
+            <nav>
+                <a href="/">Início</a>
+                <a href="/view-auctions" class="active">Ver Leilões</a>
+                <a href="/create-auction">Criar Leilão</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="auctions-header">
+                <h2>Todos os Leilões</h2>
+                <button id="refreshBtn" class="btn btn-secondary">🔄 Atualizar</button>
+            </div>
+
+            <div id="loading" class="loading">Carregando leilões...</div>
+            <div id="auctionsList" class="auctions-list"></div>
+            <div id="noAuctions" class="no-auctions" style="display: none;">
+                <p>Nenhum leilão disponível no momento.</p>
+                <a href="/create-auction" class="btn btn-primary">Criar Primeiro Leilão</a>
+            </div>
+        </main>
+    </div>
+
+<script>
+    function parseLocalDateTime(str) {
+        // Aceita: YYYY-MM-DD HH:mm:ss
+        const [datePart, timePart] = str.split(' ');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute, second = 0] = timePart.split(':').map(Number);
+
+        return { year, month, day, hour, minute, second };
+    }
+
+
+    function isBeforeNow(localStr) {
+        const d = parseLocalDateTime(localStr);
+        const now = new Date();
+
+        if (d.year !== now.getFullYear()) return d.year < now.getFullYear();
+        if (d.month !== now.getMonth() + 1) return d.month < now.getMonth() + 1;
+        if (d.day !== now.getDate()) return d.day < now.getDate();
+        if (d.hour !== now.getHours()) return d.hour < now.getHours();
+        if (d.minute !== now.getMinutes()) return d.minute < now.getMinutes();
+        return d.second < now.getSeconds();
+    }
+
+    function formatDateTime(localStr) {
+        const d = parseLocalDateTime(localStr);
+
+        return (
+            String(d.day).padStart(2, '0') + '/' +
+            String(d.month).padStart(2, '0') + '/' +
+            d.year + ' ' +
+            String(d.hour).padStart(2, '0') + ':' +
+            String(d.minute).padStart(2, '0')
+        );
+    }
+
+    async function loadAuctions() {
+        const loadingDiv = document.getElementById('loading');
+        const auctionsList = document.getElementById('auctionsList');
+        const noAuctions = document.getElementById('noAuctions');
+
+        loadingDiv.style.display = 'block';
+        auctionsList.innerHTML = '';
+        noAuctions.style.display = 'none';
+
+        try {
+            const response = await fetch('/api/auctions');
+            const data = await response.json();
+
+            loadingDiv.style.display = 'none';
+
+            if (data.auctions && data.auctions.length > 0) {
+                data.auctions.forEach(auction => {
+                    const auctionCard = createAuctionCard(auction);
+                    auctionsList.appendChild(auctionCard);
+                });
+            } else {
+                noAuctions.style.display = 'block';
+            }
+        } catch (error) {
+            loadingDiv.style.display = 'none';
+            auctionsList.innerHTML = '<div class="error">Erro ao carregar leilões</div>';
+            console.error('Error:', error);
+        }
+    }
+
+    function createAuctionCard(auction) {
+        const card = document.createElement('div');
+        card.className = 'auction-card';
+
+        const isActive = auction.active && !isBeforeNow(auction.end_time);
+        const statusClass = isActive ? 'status-active' : 'status-closed';
+        const statusText = isActive ? '🟢 Ativo' : '🔴 Encerrado';
+
+        card.innerHTML = `
+            <div class="auction-card-header">
+                <h3>${escapeHtml(auction.title)}</h3>
+                <span class="status ${statusClass}">${statusText}</span>
+            </div>
+            <p class="auction-description">${escapeHtml(auction.description)}</p>
+            <div class="auction-info">
+                <div class="info-item">
+                    <strong>Lance Atual:</strong> R$ ${parseFloat(auction.current_bid).toFixed(2)}
+                </div>
+                <div class="info-item">
+                    <strong>Número de Lances:</strong> ${auction.bid_count}
+                </div>
+                <div class="info-item">
+                    <strong>Término:</strong> ${formatDateTime(auction.end_time)}
+                </div>
+            </div>
+            <div class="auction-actions">
+                <a href="/auction/${auction.id}" class="btn btn-primary">Ver Detalhes</a>
+            </div>
+        `;
+
+        return card;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Load auctions on page load
+    loadAuctions();
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', loadAuctions);
+
+    // Auto-refresh every 5 seconds
+    //setInterval(loadAuctions, 5000);
+    const source = new EventSource(`/stream/auction/${auctionId}`);
+
+    source.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'bid_placed') {
+            loadAuctionDetails();
+        }
+    };
+</script>
+
+</body>
+</html>
+

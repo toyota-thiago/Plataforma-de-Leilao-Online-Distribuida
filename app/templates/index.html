@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Leilão Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Plataforma de Leilão Online</h1>
+            <nav>
+                <a href="/">Início</a>
+                <a href="/view-auctions">Ver Leilões</a>
+                <a href="/create-auction">Criar Leilão</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="welcome-section">
+                <h2>Bem-vindo à Plataforma de Leilão Online</h2>
+                <p>Gerencie e participe de leilões em tempo real</p>
+                
+                <div class="action-buttons">
+                    <a href="/view-auctions" class="btn btn-primary">Ver Todos os Leilões</a>
+                    <a href="/create-auction" class="btn btn-secondary">Criar Novo Leilão</a>
+                </div>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <h3>📋 Criar Leilões</h3>
+                    <p>Crie leilões para seus itens com descrição, preço inicial e data de término</p>
+                </div>
+                <div class="feature-card">
+                    <h3>💰 Fazer Lances</h3>
+                    <p>Participe de leilões fazendo lances em tempo real</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⏱️ Tempo Real</h3>
+                    <p>Acompanhe atualizações de lances em tempo real</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+

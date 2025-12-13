@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Leilão - Plataforma de Leilão Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Plataforma de Leilão Online</h1>
+            <nav>
+                <a href="/">Início</a>
+                <a href="/view-auctions">Ver Leilões</a>
+                <a href="/create-auction" class="active">Criar Leilão</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <h2>Criar Novo Leilão</h2>
+                <form id="createAuctionForm">
+                    <div class="form-group">
+                        <label for="title">Título do Leilão *</label>
+                        <input type="text" id="title" name="title" required placeholder="Ex: iPhone 15 Pro Max">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Descrição *</label>
+                        <textarea id="description" name="description" rows="4" required placeholder="Descreva o item em leilão..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="initial_price">Preço Inicial (R$) *</label>
+                        <input type="number" id="initial_price" name="initial_price" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="end_time">Data e Hora de Término *</label>
+                        <input type="datetime-local" id="end_time" name="end_time" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Criar Leilão</button>
+                        <a href="/view-auctions" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+
+                <div id="message" class="message"></div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    // Set minimum datetime to now (LOCAL, sem fuso)
+    const now = new Date();
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    const localDatetime =
+        now.getFullYear() + '-' +
+        pad(now.getMonth() + 1) + '-' +
+        pad(now.getDate()) + 'T' +
+        pad(now.getHours()) + ':' +
+        pad(now.getMinutes());
+
+    document.getElementById('end_time').min = localDatetime;
+
+    document.getElementById('createAuctionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const data = {
+            title: formData.get('title'),
+            description: formData.get('description'),
+            initial_price: parseFloat(formData.get('initial_price')),
+            end_time: formData.get('end_time') // string local, sem fuso
+        };
+
+        const messageDiv = document.getElementById('message');
+        messageDiv.className = 'message';
+        messageDiv.textContent = 'Criando leilão...';
+
+        try {
+            const response = await fetch('/create-auction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                messageDiv.className = 'message success';
+                messageDiv.textContent = `Leilão criado com sucesso! ID: ${result.auction_id}`;
+                e.target.reset();
+                
+                setTimeout(() => {
+                    window.location.href = `/auction/${result.auction_id}`;
+                }, 2000);
+            } else {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = result.error || 'Erro ao criar leilão';
+            }
+        } catch (error) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Erro ao conectar com o servidor';
+            console.error('Error:', error);
+        }
+    });
+</script>
+</body>
+</html>
+

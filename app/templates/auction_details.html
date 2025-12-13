@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Leilão - Plataforma de Leilão Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Plataforma de Leilão Online</h1>
+            <nav>
+                <a href="/">Início</a>
+                <a href="/view-auctions">Ver Leilões</a>
+                <a href="/create-auction">Criar Leilão</a>
+            </nav>
+        </header>
+
+        <main>
+            <div id="loading" class="loading">Carregando detalhes do leilão...</div>
+            <div id="auctionDetails" style="display: none;">
+                <div class="auction-details-header">
+                    <a href="/view-auctions" class="btn btn-secondary">← Voltar</a>
+                    <h2 id="auctionTitle"></h2>
+                    <span id="auctionStatus" class="status"></span>
+                </div>
+
+                <div class="auction-details-content">
+                    <div class="auction-main-info">
+                        <div class="info-section">
+                            <h3>Descrição</h3>
+                            <p id="auctionDescription"></p>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>Informações do Leilão</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <strong>Preço Inicial:</strong>
+                                    <span id="initialPrice"></span>
+                                </div>
+                                <div class="info-item">
+                                    <strong>Lance Atual:</strong>
+                                    <span id="currentBid" class="highlight"></span>
+                                </div>
+                                <div class="info-item">
+                                    <strong>Número de Lances:</strong>
+                                    <span id="bidCount"></span>
+                                </div>
+                                <div class="info-item">
+                                    <strong>Data de Término:</strong>
+                                    <span id="endTime"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bid-section" id="bidSection">
+                            <h3>Fazer um Lance</h3>
+                            <form id="bidForm">
+                                <div class="form-group">
+                                    <label for="bidderName">Seu Nome</label>
+                                    <input type="text" id="bidderName" name="bidder" placeholder="Seu nome (opcional)">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bidAmount">Valor do Lance (R$)</label>
+                                    <input type="number" id="bidAmount" name="amount" step="0.01" min="0" required>
+                                    <small>O lance deve ser maior que o lance atual</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Fazer Lance</button>
+                            </form>
+                            <div id="bidMessage" class="message"></div>
+                        </div>
+                    </div>
+
+                    <div class="bids-history">
+                        <h3>Histórico de Lances</h3>
+                        <div id="bidsList" class="bids-list">
+                            <p class="no-bids">Nenhum lance ainda. Seja o primeiro!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="errorMessage" class="error" style="display: none;"></div>
+        </main>
+    </div>
+
+<script>
+    const auctionId = '{{ auction_id }}';
+    let currentHighestBid = 0;
+
+    function parseLocalDateTime(str) {
+    // Aceita: YYYY-MM-DD HH:mm:ss
+    const [datePart, timePart] = str.split(' ');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute, second = 0] = timePart.split(':').map(Number);
+
+    return { year, month, day, hour, minute, second };
+}
+
+
+    function isBeforeNow(localStr) {
+        const d = parseLocalDateTime(localStr);
+        const now = new Date();
+
+        if (d.year !== now.getFullYear()) return d.year < now.getFullYear();
+        if (d.month !== now.getMonth() + 1) return d.month < now.getMonth() + 1;
+        if (d.day !== now.getDate()) return d.day < now.getDate();
+        if (d.hour !== now.getHours()) return d.hour < now.getHours();
+        if (d.minute !== now.getMinutes()) return d.minute < now.getMinutes();
+        return d.second < now.getSeconds();
+    }
+
+    function formatDateTime(localStr) {
+        const d = parseLocalDateTime(localStr);
+
+        return (
+            String(d.day).padStart(2, '0') + '/' +
+            String(d.month).padStart(2, '0') + '/' +
+            d.year + ' ' +
+            String(d.hour).padStart(2, '0') + ':' +
+            String(d.minute).padStart(2, '0') +
+            (d.second ? ':' + String(d.second).padStart(2, '0') : '')
+        );
+    }
+
+    async function loadAuctionDetails() {
+        const loadingDiv = document.getElementById('loading');
+        const detailsDiv = document.getElementById('auctionDetails');
+        const errorDiv = document.getElementById('errorMessage');
+
+        loadingDiv.style.display = 'block';
+        detailsDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+
+        try {
+            const response = await fetch(`/api/auction/${auctionId}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                displayAuction(data.auction, data.bids);
+                loadingDiv.style.display = 'none';
+                detailsDiv.style.display = 'block';
+            } else {
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = data.error || 'Leilão não encontrado';
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            loadingDiv.style.display = 'none';
+            errorDiv.textContent = 'Erro ao carregar detalhes do leilão';
+            errorDiv.style.display = 'block';
+            console.error('Error:', error);
+        }
+    }
+
+    function displayAuction(auction, bids) {
+        document.getElementById('auctionTitle').textContent = auction.title;
+        document.getElementById('auctionDescription').textContent = auction.description;
+        document.getElementById('initialPrice').textContent = `R$ ${parseFloat(auction.initial_price).toFixed(2)}`;
+
+        const isActive = auction.active && !isBeforeNow(auction.end_time);
+
+        const statusSpan = document.getElementById('auctionStatus');
+        if (isActive) {
+            statusSpan.textContent = 'Ativo';
+            statusSpan.className = 'status status-active';
+        } else {
+            statusSpan.textContent = 'Encerrado';
+            statusSpan.className = 'status status-closed';
+            document.getElementById('bidSection').style.display = 'none';
+        }
+
+        document.getElementById('endTime').textContent = formatDateTime(auction.end_time);
+
+        if (bids && bids.length > 0) {
+            const highestBid = bids.reduce((max, bid) =>
+                bid.amount > max.amount ? bid : max, bids[0]
+            );
+
+            currentHighestBid = highestBid.amount;
+            document.getElementById('currentBid').textContent =
+                `R$ ${parseFloat(currentHighestBid).toFixed(2)}`;
+            document.getElementById('bidCount').textContent = bids.length;
+        } else {
+            currentHighestBid = auction.initial_price;
+            document.getElementById('currentBid').textContent =
+                `R$ ${parseFloat(auction.initial_price).toFixed(2)}`;
+            document.getElementById('bidCount').textContent = '0';
+        }
+
+        document.getElementById('bidAmount').min =
+            (currentHighestBid + 0.01).toFixed(2);
+        document.getElementById('bidAmount').placeholder =
+            `Mínimo: R$ ${(currentHighestBid + 0.01).toFixed(2)}`;
+
+        displayBids(bids);
+    }
+
+    function displayBids(bids) {
+        const bidsList = document.getElementById('bidsList');
+
+        if (!bids || bids.length === 0) {
+            bidsList.innerHTML =
+                '<p class="no-bids">Nenhum lance ainda. Seja o primeiro!</p>';
+            return;
+        }
+
+        const sortedBids = [...bids].sort((a, b) => b.amount - a.amount);
+
+        bidsList.innerHTML = sortedBids.map((bid, index) => `
+            <div class="bid-item ${index === 0 ? 'highest-bid' : ''}">
+                <div class="bid-header">
+                    <span class="bid-amount">R$ ${parseFloat(bid.amount).toFixed(2)}</span>
+                    ${index === 0 ? '<span class="badge">Maior Lance</span>' : ''}
+                </div>
+                <div class="bid-info">
+                    <span class="bidder">Por: ${escapeHtml(bid.bidder || 'Anônimo')}</span>
+                    <span class="bid-time">${formatDateTime(bid.timestamp)}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    document.getElementById('bidForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const data = {
+            auction_id: auctionId,
+            amount: parseFloat(formData.get('amount')),
+            bidder: formData.get('bidder') || 'Anonymous'
+        };
+
+        const messageDiv = document.getElementById('bidMessage');
+        messageDiv.className = 'message';
+        messageDiv.textContent = 'Enviando lance...';
+
+        try {
+            const response = await fetch('/place-bid', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                messageDiv.className = 'message success';
+                messageDiv.textContent = 'Lance realizado com sucesso!';
+                e.target.reset();
+                setTimeout(loadAuctionDetails, 500);
+            } else {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = result.error || 'Erro ao fazer lance';
+            }
+        } catch (error) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Erro ao conectar com o servidor';
+            console.error('Error:', error);
+        }
+    });
+
+    loadAuctionDetails();
+    //setInterval(loadAuctionDetails, 2000);
+    const source = new EventSource(`/stream/auction/${auctionId}`);
+
+    source.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'bid_placed') {
+            loadAuctionDetails();
+        }
+    };
+</script>
+
+</body>
+</html>
+
