@@ -21,3 +21,7 @@ kubectl apply -f k8s/
 ```bash
 localhost:30080
 ```
+
+## Agente de IA
+O código não foi testado porque tem um problema no meu python que possui certificados ssl desatualizados, que impedem a utilização da ferramenta de mandar e-mails e de instalar as bibliotecas necessárias para o Gemini funcionar.
+A ferramenta de mandar mensagens pelo discord FUNCIONA, mas tem que atualizar o webhook do canal do discord que está no script
