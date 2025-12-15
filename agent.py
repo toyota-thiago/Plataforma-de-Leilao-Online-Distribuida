@@ -73,7 +73,7 @@ root_agent = Agent(
     Always cite your sources implicitly by providing the answer clearly based on the search results.
     """,
     # This is the only tool enabled
-    tools=[google_search]
+    tools=[anunciar_vencedor_discord, anunciar_vencedor_email]
 )
 
 # Session and Runner
@@ -94,5 +94,5 @@ async def call_agent_async(query):
             final_response = event.content.parts[0].text
             print("Agent Response: ", final_response)
 
-if __name__ == "__main__":
-    asyncio.run(call_agent_async("what's the latest ai news?"))
+def run_agent(prompt):
+    asyncio.run(call_agent_async(prompt))
