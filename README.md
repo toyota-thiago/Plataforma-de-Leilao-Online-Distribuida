@@ -21,8 +21,12 @@ kubectl apply -f k8s/
 ```bash
 localhost:30080
 ```
-
-
+## Realizando testes unitários automatizados 
+```bash
+cd app
+pip install -r requirements.txt
+pytest
+```
 ## Realizando testes de carga
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
