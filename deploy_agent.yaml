@@ -1,0 +1,17 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: agente-leilao
+  namespace: kagent
+spec:
+  description: Esse agente é responsável por mandar mensagens para o vencedor do leilão
+  type: BYO
+  byo:
+    deployment:
+      image: adminturneddevops/troubleshootagent:latest
+      env:
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kagent-google
+              key: GOOGLE_API_KEY
