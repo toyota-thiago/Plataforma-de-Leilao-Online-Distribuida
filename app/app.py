@@ -113,10 +113,10 @@ class AuctionStorage:
             'id': str(uuid.uuid4()),
             'auction_id': auction_id,
             'bidder': data.get('bidder', 'Anonymous'),
+            'email': data['email'],
             'amount': amount,
             'timestamp': format_local_datetime(now_local())
         }
-
         r.zadd(
             f"bids:{auction_id}",
             {json.dumps(bid): amount}
@@ -130,6 +130,7 @@ class AuctionStorage:
                 "auction_id": auction_id,
                 "amount": amount,
                 "bidder": bid['bidder'],
+                "email": bid['email'],
                 "timestamp": bid['timestamp']
             })
         )
@@ -195,8 +196,10 @@ def api_auction_details(auction_id):
 @app.route('/place-bid', methods=['POST'])
 def place_bid():
     data = request.get_json() if request.is_json else request.form
-    if 'auction_id' not in data or 'amount' not in data:
-        return jsonify({'error': 'Missing fields auction_id or amount'}), 400
+    required = ['auction_id', 'amount', 'email']
+    for field in required:
+        if field not in data or not data[field]:
+            return jsonify({'error': f'Missing field: {field}'}), 400
     success, info = AuctionStorage.add_bid(data['auction_id'], data)
     if success:
         return jsonify({'success': True, 'message': 'Bid placed successfully'}), 200

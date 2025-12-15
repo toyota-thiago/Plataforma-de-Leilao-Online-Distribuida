@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🏛️ Plataforma de Leilão Online</h1>
+            <h1>Plataforma de Leilão Online</h1>
             <nav>
                 <a href="/">Início</a>
                 <a href="/view-auctions" class="active">Ver Leilões</a>
@@ -142,8 +142,6 @@
     // Refresh button
     document.getElementById('refreshBtn').addEventListener('click', loadAuctions);
 
-    // Auto-refresh every 5 seconds
-    //setInterval(loadAuctions, 5000);
     const source = new EventSource(`/stream/auction/${auctionId}`);
 
     source.onmessage = (event) => {

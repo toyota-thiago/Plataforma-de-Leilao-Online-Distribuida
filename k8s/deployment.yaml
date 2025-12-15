@@ -15,8 +15,16 @@ spec:
       containers:
         - name: flask
           image: thiagotoyota/plataforma-de-leilao-online-distribuida:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           env:
             - name: TZ
               value: America/Sao_Paulo
