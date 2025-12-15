@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auction-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auction-watcher
+  template:
+    metadata:
+      labels:
+        app: auction-watcher
+    spec:
+      containers:
+        - name: watcher
+          image: thiagotoyota/auction-watcher:latest
+          env:
+            - name: TZ
+              value: America/Sao_Paulo

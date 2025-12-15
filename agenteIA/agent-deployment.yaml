@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auction-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auction-agent
+  template:
+    metadata:
+      labels:
+        app: auction-agent
+    spec:
+      containers:
+        - name: agent
+          image: thiagotoyota/auction-agent:latest
+          env:
+            - name: REDIS_HOST
+              value: redis-service
+            - name: REDIS_PORT
+              value: "6379"

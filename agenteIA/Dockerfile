@@ -1,11 +1,10 @@
-ARG DOCKER_REGISTRY=ghcr.io
-ARG VERSION=0.7.4
-FROM $DOCKER_REGISTRY/kagent-dev/kagent/kagent-adk:$VERSION
+FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY . . 
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN uv sync --locked --refresh
+COPY agent_worker.py .
 
-CMD ["agenteleilao"]
+CMD ["python", "agent_worker.py"]

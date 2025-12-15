@@ -84,7 +84,7 @@ class AuctionStorage:
 
             auction['current_bid'] = highest
             auction['bid_count'] = bid_count
-            auction['active'] = end_time > now_local()
+            auction['active'] = auction.get('active', True)
 
             result.append(auction)
 
@@ -98,8 +98,7 @@ class AuctionStorage:
         if not auction:
             return False, "not_found"
 
-        end_time = parse_local_datetime(auction['end_time'])
-        if end_time <= now_local():
+        if not auction.get("active", True):
             return False, "expired"
 
         top = r.zrevrange(f"bids:{auction_id}", 0, 0, withscores=True)
@@ -189,7 +188,7 @@ def api_auction_details(auction_id):
     if not auction:
         return jsonify({'error': 'Auction not found'}), 404
     bids = AuctionStorage.get_bids(auction_id)
-    auction['active'] = parse_local_datetime(auction['end_time']) > now_local()
+    auction['active'] = auction.get('active', True)
     return jsonify({'auction': auction, 'bids': bids})
 
 
