@@ -21,3 +21,19 @@ kubectl apply -f k8s/
 ```bash
 localhost:30080
 ```
+
+
+## Realizando testes de carga
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl -n kube-system patch deployment metrics-server --type=json -p "[{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/args/-\",\"value\":\"--kubelet-insecure-tls\"},{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/args/-\",\"value\":\"--kubelet-preferred-address-types=InternalIP\"}]"
+kubectl top nodes
+kubectl get hpa
+
+kubectl get pods -w
+```
+### Em outro terminal, para gerar o tráfego
+```bash
+kubectl run -it --rm load-generator --image=busybox -- sh
+while true; do wget -q -O- http://flask-service:5000/api/auctions; done
+```
