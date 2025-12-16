@@ -48,6 +48,7 @@ cd agenteIA
 docker build -t <USUARIO>/auction-agent:latest .
 docker push <USUARIO>/auction-agent:latest
 kubectl apply -f agent-deployment.yaml
+kubectl apply -f secret.yaml
 
 cd ..
 cd watcher
