@@ -41,3 +41,17 @@ kubectl get pods -w
 kubectl run -it --rm load-generator --image=busybox -- sh
 while true; do wget -q -O- http://flask-service:5000/api/auctions; done
 ```
+
+## IA agêntico
+```bash
+cd agenteIA
+docker build -t <USUARIO>/auction-agent:latest .
+docker push <USUARIO>/auction-agent:latest
+kubectl apply -f agent-deployment.yaml
+
+cd ..
+cd watcher
+docker build -t <USUARIO>/auction-watcher:latest .
+docker push <USUARIO>/auction-watcher:latest
+kubectl apply -f watcher-deployment.yaml
+```
