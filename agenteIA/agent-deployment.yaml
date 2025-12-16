@@ -20,3 +20,36 @@ spec:
               value: redis-service
             - name: REDIS_PORT
               value: "6379"
+
+            - name: TZ
+              value: America/Sao_Paulo
+              
+            - name: DISCORD_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kagent-secrets
+                  key: DISCORD_WEBHOOK_URL
+
+            - name: SMTP_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: kagent-secrets
+                  key: SMTP_SERVER
+
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: kagent-secrets
+                  key: SMTP_PORT
+
+            - name: SMTP_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: kagent-secrets
+                  key: SMTP_EMAIL
+
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kagent-secrets
+                  key: SMTP_PASSWORD

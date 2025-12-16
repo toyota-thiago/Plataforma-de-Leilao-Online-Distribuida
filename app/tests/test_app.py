@@ -149,6 +149,7 @@ def test_place_bid_expired(client, monkeypatch):
 
     auction = auction_app.AuctionStorage.get_auction(auction_id)
     auction["end_time"] = (datetime.now() - timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
+    auction["active"] = False
     auction_app.r.set(f"auction:{auction_id}", json.dumps(auction))
 
     resp = client.post(

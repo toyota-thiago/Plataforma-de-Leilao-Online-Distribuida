@@ -20,7 +20,7 @@ def parse_datetime(value):
 def now():
     return datetime.now()
 
-print("🟢 Auction Watcher iniciado")
+print("Auction Watcher iniciado")
 
 while True:
     try:
@@ -33,7 +33,7 @@ while True:
 
             auction = json.loads(raw)
 
-            # já encerrado?
+            # já encerrado apenas ignora
             if not auction.get("active", True):
                 continue
 
@@ -41,16 +41,12 @@ while True:
 
             if end_time > now():
                 continue
-
-            # ============================
-            # ENCERRAR LEILÃO
-            # ============================
+            
+            # Encerra o leilao
             auction["active"] = False
             r.set(f"auction:{auction_id}", json.dumps(auction))
 
-            # ============================
-            # BUSCAR MAIOR LANCE
-            # ============================
+            # Busca maior lance
             top = r.zrevrange(
                 f"bids:{auction_id}",
                 0,
@@ -58,14 +54,11 @@ while True:
             )
 
             if not top:
-                print(f"⚠️ Leilão sem lances: {auction['title']}")
+                print(f"Leilão sem lances: {auction['title']}")
                 continue
 
             bid = json.loads(top[0])
 
-            # ============================
-            # PUBLICAR EVENTO COMPLETO
-            # ============================
             pub.publish(
                 "auction:ended",
                 json.dumps({
@@ -77,14 +70,8 @@ while True:
                 })
             )
 
-            print(
-                f"🏁 Leilão encerrado: {auction['title']} "
-                f"| vencedor={bid['bidder']} "
-                f"| R$ {bid['amount']}"
-            )
-
         time.sleep(2)
 
     except Exception as e:
-        print("❌ Erro no watcher:", e)
+        print("Erro no watcher:", e)
         time.sleep(5)

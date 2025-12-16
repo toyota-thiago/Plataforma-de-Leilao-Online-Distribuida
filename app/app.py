@@ -18,7 +18,6 @@ def parse_local_datetime(value: str) -> datetime:
     Aceita:
     - YYYY-MM-DDTHH:MM
     - YYYY-MM-DDTHH:MM:SS
-    Converte para datetime LOCAL
     """
     value = value.replace("T", " ")
     if len(value) == 16:
@@ -141,7 +140,7 @@ class AuctionStorage:
         bids = r.zrevrange(f"bids:{auction_id}", 0, -1)
         return [json.loads(b) for b in bids]
 
-# ---------------- Routes ----------------
+# ---------------- Rotas ----------------
 
 @app.route('/')
 def index():
@@ -174,8 +173,6 @@ def view_auctions():
 def auction_details(auction_id):
     return render_template('auction_details.html', auction_id=auction_id)
 
-
-# --------- API ---------
 
 @app.route('/api/auctions')
 def api_auctions():
